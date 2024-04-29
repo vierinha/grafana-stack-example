@@ -14,7 +14,7 @@ services:
       - grafananetwork
 
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.51.2
     container_name: prometheus
     command: --log.level=error
     volumes:
@@ -68,7 +68,7 @@ services:
       - grafananetwork
 
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:10.4.2
     container_name: grafana
     volumes:
       - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
