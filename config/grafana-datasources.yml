@@ -13,25 +13,30 @@ datasources:
     uid: prometheus
     jsonData:
       httpHeaderName1: "X-Scope-OrgID"
+      exemplarTraceIdDestinations:
+        - datasourceUid: tempo
+          name: trace_id
+      httpMethod: POST
     secureJsonData:
       httpHeaderValue1: "default"
   - name: Loki
     type: loki
+    typeName: Loki
+    uid: loki
     access: proxy
     orgId: 1
     url: http://loki:3100
     basicAuth: false
     isDefault: false
-    version: 1
     editable: false
-    apiVersion: 1
     jsonData:
       httpHeaderName1: "X-Scope-OrgID"
       httpHeaderName2: "Connection"
       httpHeaderName3: "Upgrade"
       derivedFields:
         - datasourceUid: tempo
-          matcherRegex: "traceID=(\\w+)"
+          matcherType: label
+          matcherRegex: trace_id
           name: TraceID
           url: $${__value.raw}
     secureJsonData:
@@ -52,7 +57,18 @@ datasources:
     jsonData:
       httpHeaderName1: "X-Scope-OrgID"
       httpMethod: GET
-      serviceMap:
-        datasourceUid: prometheus
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      tracesToLogsV2:
+        datasourceUid: loki
+        spanStartTimeShift: 0
+        spanEndTimeShift: 0
+        tags: []
+        filterByTraceID: false
+        filterBySpanID: false
+        customQuery: true
+        query: '{$${__tags}} | trace_id ="$${__trace.traceId}" and span_id ="$${__span.spanId}"'
     secureJsonData:
       httpHeaderValue1: "default"
