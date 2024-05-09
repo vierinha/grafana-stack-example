@@ -1,13 +1,14 @@
 receivers:
   otlp:
     protocols:
-      grpc:
-        endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
+        include_metadata: true
 
 processors:
   batch:
+    metadata_keys:
+    - X-Username
 
 exporters:
   otlphttp/loki:
@@ -47,4 +48,4 @@ extensions:
     headers:
       - action: upsert
         key: X-Scope-OrgID
-        value: default
+        from_context: X-Username

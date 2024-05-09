@@ -74,11 +74,33 @@ services:
     volumes:
       - ./config/config.alloy:/etc/alloy/config.alloy
     restart: always
-    ports:
-      - "4317:4317"
-      - "4318:4318"
+    # ports:
+    #   - "4318:4318"
     networks:
       - grafananetwork
+
+  nginx:
+    image: nginx:mainline-alpine3.19
+    container_name: nginx
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+      - ./config/htpasswd:/etc/nginx/.htpasswd:ro
+    restart: always
+    ports:
+      - "4318:8080"
+    networks:
+      - grafananetwork
+
+  # otelcollectorapp:
+  #   image: otel/opentelemetry-collector-contrib:0.99.0
+  #   container_name: otelcollectorapp
+  #   volumes:
+  #     - ./config/otelcollectorapp.yaml:/etc/otelcol-contrib/config.yaml
+  #   restart: always
+  #   ports:
+  #     - "4318:4318"
+  #   networks:
+  #     - grafananetwork
 
   grafana:
     image: grafana/grafana:10.4.2

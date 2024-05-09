@@ -1,14 +1,14 @@
 otelcol.auth.headers "default" {
 	header {
-		key   = "X-Scope-OrgID"
-		value = "default"
+		key          = "X-Scope-OrgID"
+		from_context = "X-Username"
 	}
 }
 
 otelcol.receiver.otlp "default" {
-	grpc { }
-
-	http { }
+	http {
+		include_metadata = true
+	}
 
 	output {
 		metrics = [otelcol.processor.batch.default.input]
@@ -18,6 +18,8 @@ otelcol.receiver.otlp "default" {
 }
 
 otelcol.processor.batch "default" {
+	metadata_keys = ["X-Username"]
+
 	output {
 		metrics = [otelcol.exporter.otlphttp.default_mimir.input]
 		logs    = [otelcol.exporter.otlphttp.default_loki.input]
