@@ -67,11 +67,12 @@ services:
     networks:
       - grafananetwork
 
-  otelcollector:
-    image: otel/opentelemetry-collector-contrib:0.99.0
-    container_name: otelcollector
+  alloy:
+    image: grafana/alloy:v1.0.0
+    container_name: alloy
+    command: run --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
-      - ./config/otelcollector.yaml:/etc/otelcol-contrib/config.yaml
+      - ./config/config.alloy:/etc/alloy/config.alloy
     restart: always
     ports:
       - "4317:4317"

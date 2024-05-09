@@ -1,0 +1,54 @@
+otelcol.auth.headers "default" {
+	header {
+		key   = "X-Scope-OrgID"
+		value = "default"
+	}
+}
+
+otelcol.receiver.otlp "default" {
+	grpc { }
+
+	http { }
+
+	output {
+		metrics = [otelcol.processor.batch.default.input]
+		logs    = [otelcol.processor.batch.default.input]
+		traces  = [otelcol.processor.batch.default.input]
+	}
+}
+
+otelcol.processor.batch "default" {
+	output {
+		metrics = [otelcol.exporter.otlphttp.default_mimir.input]
+		logs    = [otelcol.exporter.otlphttp.default_loki.input]
+		traces  = [otelcol.exporter.otlphttp.default_tempo.input]
+	}
+}
+
+otelcol.exporter.otlphttp "default_mimir" {
+	client {
+		endpoint           = "http://mimir:9009/otlp"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+otelcol.exporter.otlphttp "default_loki" {
+	client {
+		endpoint           = "http://loki:3100/otlp"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+otelcol.exporter.otlphttp "default_tempo" {
+	client {
+		endpoint           = "http://tempo:4318"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default.handler
+	}
+}
+
+logging {
+    level  = "error"
+}
