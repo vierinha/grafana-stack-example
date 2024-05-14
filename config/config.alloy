@@ -1,3 +1,7 @@
+logging {
+    level  = "error"
+}
+
 otelcol.auth.headers "default" {
 	header {
 		key          = "X-Scope-OrgID"
@@ -51,6 +55,59 @@ otelcol.exporter.otlphttp "default_tempo" {
 	}
 }
 
-logging {
-    level  = "error"
+otelcol.auth.headers "default_lgtm" {
+	header {
+		key   = "X-Scope-OrgID"
+		value = "default"
+	}
+}
+
+prometheus.scrape "scraper_loki" {
+    job_name        = "loki"
+    targets         = [{"__address__"   = "loki:3100"}]
+    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    scrape_interval = "10s"
+    scrape_timeout = "10s"
+    metrics_path    = "/metrics"
+}
+
+prometheus.scrape "scraper_mimir" {
+    job_name        = "mimir"
+    targets         = [{"__address__"   = "mimir:9009"}]
+    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    scrape_interval = "10s"
+    scrape_timeout = "10s"
+    metrics_path    = "/metrics"
+}
+
+prometheus.scrape "scraper_tempo" {
+    job_name        = "tempo"
+    targets         = [{"__address__"   = "tempo:3200"}]
+    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    scrape_interval = "10s"
+    scrape_timeout = "10s"
+    metrics_path    = "/metrics"
+}
+
+prometheus.scrape "scraper_alloy" {
+    job_name        = "alloy"
+    targets         = [{"__address__"   = "alloy:12345"}]
+    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    scrape_interval = "10s"
+    scrape_timeout = "10s"
+    metrics_path    = "/metrics"
+}
+
+otelcol.receiver.prometheus "receiver_lgtm" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.exporter_lgtm.input]
+  }
+}
+
+otelcol.exporter.otlphttp "exporter_lgtm" {
+	client {
+		endpoint           = "http://mimir:9009/otlp"
+		http2_ping_timeout = "0s"
+		auth               = otelcol.auth.headers.default_lgtm.handler
+	}
 }
