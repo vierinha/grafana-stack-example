@@ -62,6 +62,15 @@ otelcol.auth.headers "default_lgtm" {
 	}
 }
 
+prometheus.scrape "scraper_grafana" {
+    job_name        = "grafana"
+    targets         = [{"__address__"   = "grafana:3000"}]
+    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    scrape_interval = "10s"
+    scrape_timeout = "10s"
+    metrics_path    = "/metrics"
+}
+
 prometheus.scrape "scraper_loki" {
     job_name        = "loki"
     targets         = [{"__address__"   = "loki:3100"}]
