@@ -55,17 +55,10 @@ otelcol.exporter.otlphttp "default_tempo" {
 	}
 }
 
-otelcol.auth.headers "default_lgtm" {
-	header {
-		key   = "X-Scope-OrgID"
-		value = "default"
-	}
-}
-
 prometheus.scrape "scraper_grafana" {
     job_name        = "grafana"
     targets         = [{"__address__"   = "grafana:3000"}]
-    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
     scrape_interval = "10s"
     scrape_timeout = "10s"
     metrics_path    = "/metrics"
@@ -74,7 +67,7 @@ prometheus.scrape "scraper_grafana" {
 prometheus.scrape "scraper_loki" {
     job_name        = "loki"
     targets         = [{"__address__"   = "loki:3100"}]
-    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
     scrape_interval = "10s"
     scrape_timeout = "10s"
     metrics_path    = "/metrics"
@@ -83,7 +76,7 @@ prometheus.scrape "scraper_loki" {
 prometheus.scrape "scraper_mimir" {
     job_name        = "mimir"
     targets         = [{"__address__"   = "mimir:9009"}]
-    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
     scrape_interval = "10s"
     scrape_timeout = "10s"
     metrics_path    = "/metrics"
@@ -92,7 +85,7 @@ prometheus.scrape "scraper_mimir" {
 prometheus.scrape "scraper_tempo" {
     job_name        = "tempo"
     targets         = [{"__address__"   = "tempo:3200"}]
-    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
     scrape_interval = "10s"
     scrape_timeout = "10s"
     metrics_path    = "/metrics"
@@ -101,22 +94,18 @@ prometheus.scrape "scraper_tempo" {
 prometheus.scrape "scraper_alloy" {
     job_name        = "alloy"
     targets         = [{"__address__"   = "alloy:12345"}]
-    forward_to      = [otelcol.receiver.prometheus.receiver_lgtm.receiver]
+    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
     scrape_interval = "10s"
     scrape_timeout = "10s"
     metrics_path    = "/metrics"
 }
 
-otelcol.receiver.prometheus "receiver_lgtm" {
-  output {
-    metrics = [otelcol.exporter.otlphttp.exporter_lgtm.input]
-  }
-}
+prometheus.remote_write "exporter_lgtm" {
+  endpoint {
+    url = "http://mimir:9009/api/v1/push"
 
-otelcol.exporter.otlphttp "exporter_lgtm" {
-	client {
-		endpoint           = "http://mimir:9009/otlp"
-		http2_ping_timeout = "0s"
-		auth               = otelcol.auth.headers.default_lgtm.handler
-	}
+    headers = {
+      "X-Scope-OrgID" = "default",
+    }
+  }
 }
