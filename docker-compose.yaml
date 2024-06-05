@@ -68,9 +68,9 @@ services:
       - grafananetwork
 
   alloy:
-    image: grafana/alloy:v1.0.0
+    image: grafana/alloy:v1.1.0
     container_name: alloy
-    command: run --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
+    command: run --disable-reporting --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
       - ./config/config.alloy:/etc/alloy/config.alloy
     restart: always
