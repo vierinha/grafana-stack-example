@@ -1,7 +1,7 @@
 services:
 
   mimir:
-    image: grafana/mimir:2.12.0
+    image: grafana/mimir:2.13.0
     container_name: mimir
     command: --config.file=/etc/mimir/config.yaml
     volumes:
@@ -14,7 +14,7 @@ services:
       - grafananetwork
 
   # prometheus:
-  #   image: prom/prometheus:v2.51.2
+  #   image: prom/prometheus:v2.53.1
   #   container_name: prometheus
   #   command: --log.level=error
   #   volumes:
@@ -24,7 +24,7 @@ services:
   #     - grafananetwork
 
   loki:
-    image: grafana/loki:3.0.0
+    image: grafana/loki:3.1.0
     container_name: loki
     command: -config.file=/etc/loki/config.yaml
     volumes:
@@ -37,7 +37,7 @@ services:
       - grafananetwork
 
   # promtail:
-  #   image: grafana/promtail:2.9.7
+  #   image: grafana/promtail:3.1.0
   #   container_name: promtail
   #   volumes:
   #     - ./config/promtail.yaml:/etc/promtail/config.yml
@@ -50,7 +50,7 @@ services:
   #     - grafananetwork
 
   tempo:
-    image: grafana/tempo:2.4.1
+    image: grafana/tempo:2.5.0
     container_name: tempo
     command: [ "-config.file=/etc/tempo/config.yaml" ]
     volumes:
@@ -68,7 +68,7 @@ services:
       - grafananetwork
 
   alloy:
-    image: grafana/alloy:v1.1.0
+    image: grafana/alloy:v1.2.1
     container_name: alloy
     command: run --disable-reporting --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
@@ -93,7 +93,7 @@ services:
       - grafananetwork
 
   # otelcollectorapp:
-  #   image: otel/opentelemetry-collector-contrib:0.99.0
+  #   image: otel/opentelemetry-collector-contrib:0.104.0
   #   container_name: otelcollectorapp
   #   volumes:
   #     - ./config/otelcollectorapp.yaml:/etc/otelcol-contrib/config.yaml
@@ -104,7 +104,7 @@ services:
   #     - grafananetwork
 
   grafana:
-    image: grafana/grafana:10.4.2
+    image: grafana/grafana:11.1.0
     container_name: grafana
     volumes:
       - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
