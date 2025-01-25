@@ -5,34 +5,34 @@ datasources:
     type: prometheus
     access: proxy
     orgId: 1
-    url: http://mimir:9009/prometheus
-    basicAuth: false
+    url: http://nginx:8080/prometheus
     isDefault: true
     version: 1
     editable: false
+    basicAuth: true
+    basicAuthUser: default
     uid: prometheus
     jsonData:
-      httpHeaderName1: "X-Scope-OrgID"
       exemplarTraceIdDestinations:
         - datasourceUid: tempo
           name: trace_id
       httpMethod: POST
     secureJsonData:
-      httpHeaderValue1: "default"
+      basicAuthPassword: default
   - name: Loki
     type: loki
     typeName: Loki
     uid: loki
     access: proxy
     orgId: 1
-    url: http://loki:3100
-    basicAuth: false
+    url: http://nginx:8080
     isDefault: false
     editable: false
+    basicAuth: true
+    basicAuthUser: default
     jsonData:
-      httpHeaderName1: "X-Scope-OrgID"
-      httpHeaderName2: "Connection"
-      httpHeaderName3: "Upgrade"
+      httpHeaderName1: "Connection"
+      httpHeaderName2: "Upgrade"
       derivedFields:
         - datasourceUid: tempo
           matcherType: label
@@ -40,22 +40,22 @@ datasources:
           name: TraceID
           url: $${__value.raw}
     secureJsonData:
-      httpHeaderValue1: "default"
-      httpHeaderValue2: "Upgrade"
-      httpHeaderValue3: "websocket"
+      basicAuthPassword: default
+      httpHeaderValue1: "Upgrade"
+      httpHeaderValue2: "websocket"
   - name: Tempo
     type: tempo
     access: proxy
     orgId: 1
-    url: http://tempo:3200
-    basicAuth: false
+    url: http://nginx:8080/tempo
     isDefault: false
     version: 1
     editable: false
+    basicAuth: true
+    basicAuthUser: default
     apiVersion: 1
     uid: tempo
     jsonData:
-      httpHeaderName1: "X-Scope-OrgID"
       httpMethod: GET
       nodeGraph:
         enabled: true
@@ -73,4 +73,4 @@ datasources:
         customQuery: true
         query: '{$${__tags}} | trace_id ="$${__trace.traceId}" and span_id ="$${__span.spanId}"'
     secureJsonData:
-      httpHeaderValue1: "default"
+      basicAuthPassword: default

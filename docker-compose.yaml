@@ -1,5 +1,41 @@
 services:
 
+  nginx:
+    image: nginx:mainline-alpine3.20
+    container_name: nginx
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
+      - ./config/htpasswd:/etc/nginx/.htpasswd:ro
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      - grafana
+    networks:
+      - grafananetwork
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    container_name: grafana
+    volumes:
+      - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
+      - ./grafana:/var/lib/grafana
+      - ./config/grafana.ini:/etc/grafana/grafana.ini
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_DEFAULT_FORCE_MIGRATION=true
+    # ports:
+    #   - "3000:3000"
+    restart: always
+    depends_on:
+      - mimir
+      - loki
+      - tempo
+    networks:
+      - grafananetwork
+
   mimir:
     image: grafana/mimir:2.15.0
     container_name: mimir
@@ -13,16 +49,6 @@ services:
     #   - "9009:9009"
     networks:
       - grafananetwork
-
-  # prometheus:
-  #   image: prom/prometheus:v2.53.1
-  #   container_name: prometheus
-  #   command: --log.level=error
-  #   volumes:
-  #     - ./config/prometheus.yaml:/prometheus/prometheus.yml
-  #   restart: always
-  #   networks:
-  #     - grafananetwork
 
   loki:
     image: grafana/loki:3.3.2
@@ -45,12 +71,8 @@ services:
       - ./config/tempo.yaml:/etc/tempo/config.yaml
       - ./tempo/data:/var/tempo
   #   ports:
-  #     - "14268:14268"  # jaeger ingest
-  #     - "3200:3200"   # tempo
-  #     - "9095:9095" # tempo grpc
   #     - "4317:4317"  # otlp grpc
   #     - "4318:4318"  # otlp http
-  #     - "9411:9411"   # zipkin
     restart: always
     networks:
       - grafananetwork
@@ -66,20 +88,20 @@ services:
     # ports:
     #   - 12345:12345
     #   - "4318:4318"
+    depends_on:
+      - nginx
     networks:
       - grafananetwork
 
-  nginx:
-    image: nginx:mainline-alpine3.19
-    container_name: nginx
-    volumes:
-      - ./config/nginx.conf:/etc/nginx/conf.d/nginx.conf:ro
-      - ./config/htpasswd:/etc/nginx/.htpasswd:ro
-    restart: always
-    ports:
-      - "4318:8080"
-    networks:
-      - grafananetwork
+  # prometheus:
+  #   image: prom/prometheus:v2.53.1
+  #   container_name: prometheus
+  #   command: --log.level=error
+  #   volumes:
+  #     - ./config/prometheus.yaml:/prometheus/prometheus.yml
+  #   restart: always
+  #   networks:
+  #     - grafananetwork
 
   # otelcollectorapp:
   #   image: otel/opentelemetry-collector-contrib:0.104.0
@@ -91,24 +113,6 @@ services:
   #     - "4318:4318"
   #   networks:
   #     - grafananetwork
-
-  grafana:
-    image: grafana/grafana:11.4.0
-    container_name: grafana
-    volumes:
-      - ./config/grafana-datasources.yml:/etc/grafana/provisioning/datasources/datasources.yaml
-      - ./grafana:/var/lib/grafana
-      - ./config/grafana.ini:/etc/grafana/grafana.ini
-    environment:
-      - GF_AUTH_ANONYMOUS_ENABLED=true
-      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
-      - GF_AUTH_DISABLE_LOGIN_FORM=true
-      - GF_DEFAULT_FORCE_MIGRATION=true
-    ports:
-      - "3000:3000"
-    restart: always
-    networks:
-      - grafananetwork
 
 networks:
   grafananetwork:
