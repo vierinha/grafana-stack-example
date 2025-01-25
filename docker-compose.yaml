@@ -75,20 +75,22 @@ services:
   #     - "4317:4317"  # otlp grpc
   #     - "4318:4318"  # otlp http
     restart: always
+    depends_on:
+      - mimir
     networks:
       - grafananetwork
 
   alloy:
-    image: grafana/alloy:v1.5.1
+    image: grafana/alloy:v1.6.0
     container_name: alloy
     command: run --disable-reporting --server.http.listen-addr=0.0.0.0:12345 --storage.path=/var/lib/alloy/data /etc/alloy/config.alloy
     volumes:
       - ./config/config.alloy:/etc/alloy/config.alloy
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
-    # ports:
-    #   - 12345:12345
-    #   - "4318:4318"
+    ports:
+      - "4317:4317"
+      - "4318:4318"
     depends_on:
       - nginx
     networks:

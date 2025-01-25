@@ -2,110 +2,136 @@ logging {
     level  = "error"
 }
 
-otelcol.auth.headers "default" {
-	header {
-		key          = "X-Scope-OrgID"
-		from_context = "X-Scope-OrgID"
-	}
+otelcol.receiver.otlp "otlp_receiver" {
+  http {
+    endpoint = "0.0.0.0:4318"
+  }
+  grpc {
+    endpoint = "0.0.0.0:4317"
+  }
+
+  output {
+    metrics = [otelcol.processor.batch.otlp_processor.input]
+    logs    = [otelcol.processor.batch.otlp_processor.input]
+    traces  = [otelcol.processor.batch.otlp_processor.input]
+  }
 }
 
-otelcol.receiver.otlp "default" {
-	http {
-		include_metadata = true
-	}
-
-	output {
-		metrics = [otelcol.processor.batch.default.input]
-		logs    = [otelcol.processor.batch.default.input]
-		traces  = [otelcol.processor.batch.default.input]
-	}
+otelcol.processor.batch "otlp_processor" {
+  output {
+    metrics = [otelcol.exporter.otlphttp.otlp_exporter.input]
+    logs    = [otelcol.exporter.otlphttp.otlp_exporter.input]
+    traces  = [otelcol.exporter.otlphttp.otlp_exporter.input]
+  }
 }
 
-otelcol.processor.batch "default" {
-	metadata_keys = ["X-Scope-OrgID"]
-
-	output {
-		metrics = [otelcol.exporter.otlphttp.default_mimir.input]
-		logs    = [otelcol.exporter.otlphttp.default_loki.input]
-		traces  = [otelcol.exporter.otlphttp.default_tempo.input]
-	}
+otelcol.auth.basic "basic_auth" {
+  username = "default"
+  password = "default"
 }
 
-otelcol.exporter.otlphttp "default_mimir" {
-	client {
-		endpoint           = "http://mimir:9009/otlp"
-		http2_ping_timeout = "0s"
-		auth               = otelcol.auth.headers.default.handler
-	}
-}
-
-otelcol.exporter.otlphttp "default_loki" {
-	client {
-		endpoint           = "http://loki:3100/otlp"
-		http2_ping_timeout = "0s"
-		auth               = otelcol.auth.headers.default.handler
-	}
-}
-
-otelcol.exporter.otlphttp "default_tempo" {
-	client {
-		endpoint           = "http://tempo:4318"
-		http2_ping_timeout = "0s"
-		auth               = otelcol.auth.headers.default.handler
-	}
+otelcol.exporter.otlphttp "otlp_exporter" {
+  client {
+    endpoint = "http://nginx:8080/otlp"
+    auth     = otelcol.auth.basic.basic_auth.handler
+  }
 }
 
 prometheus.scrape "scraper_grafana" {
     job_name        = "grafana"
     targets         = [{"__address__"   = "grafana:3000"}]
-    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
-    scrape_interval = "10s"
-    scrape_timeout = "10s"
+    forward_to      = [prometheus.remote_write.prometheus_exporter.receiver]
+    scrape_interval = "15s"
+    scrape_timeout = "15s"
     metrics_path    = "/metrics"
 }
 
 prometheus.scrape "scraper_loki" {
     job_name        = "loki"
     targets         = [{"__address__"   = "loki:3100"}]
-    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
-    scrape_interval = "10s"
-    scrape_timeout = "10s"
+    forward_to      = [prometheus.remote_write.prometheus_exporter.receiver]
+    scrape_interval = "15s"
+    scrape_timeout = "15s"
     metrics_path    = "/metrics"
 }
 
 prometheus.scrape "scraper_mimir" {
     job_name        = "mimir"
     targets         = [{"__address__"   = "mimir:9009"}]
-    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
-    scrape_interval = "10s"
-    scrape_timeout = "10s"
+    forward_to      = [prometheus.remote_write.prometheus_exporter.receiver]
+    scrape_interval = "15s"
+    scrape_timeout = "15s"
     metrics_path    = "/metrics"
 }
 
 prometheus.scrape "scraper_tempo" {
     job_name        = "tempo"
     targets         = [{"__address__"   = "tempo:3200"}]
-    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
-    scrape_interval = "10s"
-    scrape_timeout = "10s"
+    forward_to      = [prometheus.remote_write.prometheus_exporter.receiver]
+    scrape_interval = "15s"
+    scrape_timeout = "15s"
     metrics_path    = "/metrics"
 }
 
 prometheus.scrape "scraper_alloy" {
     job_name        = "alloy"
     targets         = [{"__address__"   = "alloy:12345"}]
-    forward_to      = [prometheus.remote_write.exporter_lgtm.receiver]
-    scrape_interval = "10s"
-    scrape_timeout = "10s"
+    forward_to      = [prometheus.remote_write.prometheus_exporter.receiver]
+    scrape_interval = "15s"
+    scrape_timeout = "15s"
     metrics_path    = "/metrics"
 }
 
-prometheus.remote_write "exporter_lgtm" {
+prometheus.remote_write "prometheus_exporter" {
   endpoint {
-    url = "http://mimir:9009/api/v1/push"
+    url = "http://nginx:8080/prometheus/api/v1/push"
+    basic_auth {
+      username = "default"
+      password = "default"
+    }
+  }
+}
 
-    headers = {
-      "X-Scope-OrgID" = "default",
+discovery.docker "containerlogs" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "2s"
+}
+
+loki.process "containerlogs" {
+	forward_to = [loki.write.loki_exporter.receiver]
+
+	stage.static_labels {
+		values = {
+			host = "HOSTNAME",
+			job  = "docker.sock",
+		}
+	}
+}
+
+discovery.relabel "containerlogs" {
+	targets = []
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+loki.source.docker "containerlogs" {
+	host             = "unix:///var/run/docker.sock"
+	targets          = discovery.docker.containerlogs.targets
+	forward_to       = [loki.process.containerlogs.receiver]
+	relabel_rules    = discovery.relabel.containerlogs.rules
+	refresh_interval = "2s"
+}
+
+loki.write "loki_exporter" {
+  endpoint {
+    url       = "http://nginx:8080/loki/api/v1/push"
+    basic_auth {
+      username = "default"
+      password = "default"
     }
   }
 }
