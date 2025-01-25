@@ -93,15 +93,19 @@ services:
     networks:
       - grafananetwork
 
-  # prometheus:
-  #   image: prom/prometheus:v2.53.1
-  #   container_name: prometheus
-  #   command: --log.level=error
-  #   volumes:
-  #     - ./config/prometheus.yaml:/prometheus/prometheus.yml
-  #   restart: always
-  #   networks:
-  #     - grafananetwork
+  prometheus:
+    image: prom/prometheus:v3.1.0
+    container_name: prometheus
+    command: --log.level=error
+    volumes:
+      - ./config/prometheus.yaml:/prometheus/prometheus.yml
+    restart: always
+    ports:
+      - "9090:9090"
+    depends_on:
+      - nginx
+    networks:
+      - grafananetwork
 
   # otelcollectorapp:
   #   image: otel/opentelemetry-collector-contrib:0.104.0
