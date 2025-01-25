@@ -1,0 +1,13 @@
+overrides:
+  default:
+    metrics_generator:
+      processors: [service-graphs, span-metrics, local-blocks]
+      generate_native_histograms: both
+      remote_write_headers:
+        Authorization: 'Basic ZGVmYXVsdDpkZWZhdWx0'
+    ingestion:
+      burst_size_bytes: 4000000
+      rate_limit_bytes: 2000000
+      max_traces_per_user: 1000
+    global:
+      max_bytes_per_trace: 1048576

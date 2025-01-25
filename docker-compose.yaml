@@ -69,6 +69,7 @@ services:
     command: [ "-config.file=/etc/tempo/config.yaml" ]
     volumes:
       - ./config/tempo.yaml:/etc/tempo/config.yaml
+      - ./config/tempo-overrides.yaml:/etc/tempo/overrides.yaml
       - ./tempo/data:/var/tempo
   #   ports:
   #     - "4317:4317"  # otlp grpc
