@@ -110,13 +110,14 @@ services:
     networks:
       - grafananetwork
 
-  # otelcollectorapp:
-  #   image: otel/opentelemetry-collector-contrib:0.104.0
-  #   container_name: otelcollectorapp
+  # otelcollector:
+  #   image: otel/opentelemetry-collector-contrib:0.118.0
+  #   container_name: otelcollector
   #   volumes:
-  #     - ./config/otelcollectorapp.yaml:/etc/otelcol-contrib/config.yaml
+  #     - ./config/otelcollector.yaml:/etc/otelcol-contrib/config.yaml
   #   restart: always
   #   ports:
+  #     - "4317:4317"
   #     - "4318:4318"
   #   networks:
   #     - grafananetwork

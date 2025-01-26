@@ -1,51 +1,55 @@
 receivers:
   otlp:
     protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
       http:
         endpoint: 0.0.0.0:4318
-        include_metadata: true
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'otel-collector'
+          scrape_interval: 15s
+          static_configs:
+            - targets: ['127.0.0.1:8888']
 
 processors:
   batch:
-    metadata_keys:
-    - X-Scope-OrgID
 
 exporters:
-  otlphttp/loki:
-    endpoint: http://loki:3100/otlp
+  otlphttp:
+    endpoint: http://nginx:8080/otlp
     auth:
-      authenticator: headers_setter
-  otlphttp/tempo:
-    endpoint: http://tempo:4318
-    auth:
-      authenticator: headers_setter
-  otlphttp/mimir:
-    endpoint: http://mimir:9009/otlp
-    auth:
-      authenticator: headers_setter
+      authenticator: basicauth
 
 service:
-  extensions: [headers_setter]
+  extensions: [basicauth]
   pipelines:
     logs:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp/loki]
+      exporters: [otlphttp]
     traces:
       receivers: [otlp]
       processors: [batch]
-      exporters: [otlphttp/tempo]
+      exporters: [otlphttp]
     metrics:
-      receivers: [otlp]
+      receivers: [otlp, prometheus]
       processors: [batch]
-      exporters: [otlphttp/mimir]
+      exporters: [otlphttp]
   telemetry:
     logs:
       level: "error"
+    metrics:
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: '0.0.0.0'
+                port: 8888
 
 extensions:
-  headers_setter:
-    headers:
-      - action: upsert
-        key: X-Scope-OrgID
-        from_context: X-Scope-OrgID
+  basicauth:
+    client_auth: 
+      username: default
+      password: default
